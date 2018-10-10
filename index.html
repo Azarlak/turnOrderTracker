@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Turn Order Tracker + Testing stuff</title>
+        <!--
+        Allow toggling skins
+        Notebook skin base:
+            background-color: #f1f1c1;
+            background-color: #ffffdf;
+            background-color: #eaca50;
+            background-color: #ffffff;
+        -->
+        <style>
+            .centerText{
+                text-align: center;
+            }
+            .textInputField{
+                margin: 10px 40px 0px -50px;
+            }
+            table#turnOrderTable {
+                border: 1px solid black;
+                border-collapse: collapse;
+                width: 100%;
+                background-color: #f1f1c1;
+                empty-cells: show;
+                table-layout: auto;
+            }
+            #turnOrderTable tr:nth-child(even){
+                background-color: #ffffff;
+            }
+            #turnOrderTable tr:nth-child(odd){
+                background-color: #eeeeee;
+            }
+            #turnOrderTable tr td:nth-child(2),
+            #turnOrderTable tr td:nth-child(3),
+            #turnOrderTable tr td:nth-child(4){
+                text-align: center;
+            }
+            #turnOrderTable tr td:nth-child(2){
+                width: 20px;
+            }
+            #turnOrderTable tr td:nth-child(3){
+                width: 30px;
+            }
+            #turnOrderTable tr td:nth-child(4){
+                width: 120px;
+            }
+            #turnOrderTable tr th:nth-child(2){
+                width: 20px;
+            }
+            #turnOrderTable tr th:nth-child(3){
+                width: 30px;
+            }
+            #turnOrderTable tr th:nth-child(4){
+                width: 120px;
+            }
+            .turnOrderTableCaption{
+                font-size: 20px;
+                background-color: #eaca50;
+                border: 1px solid black;
+                margin: 10px 0px -1px;
+            }
+            th, td{
+                border-right: 1px solid black;
+                border-bottom: 1px solid lightgray;
+                padding: 1.5px 3px;
+            }
+            th{
+                background-color: #dfdfdf;
+                border-bottom: 1px solid #888;
+            }
+            
+            .button{
+                font-size: 13px;
+                display: inline-block;
+                margin: 2.5px 0px 2.5px;
+                height: 22px;
+            }
+            .button:hover{
+                transform: scale(1);
+            }
+            .button:active{
+                transform: scale(0.98);
+            }
+            .clickButton{
+            }
+            .removeUserButton{
+                margin: -0px -2px -1px;
+                height: 24px;
+            }
+            .addUserButton{
+                padding-right: 2px;
+                padding-left: 5px;
+                margin-left: -5px;
+                height: 24px;
+            }
+            .switchAddModeButton{
+                height: 24px;
+                margin-left: -5px;
+                padding: 0px;
+                width: 45px;
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div>
+        <!-- TODO: 
+            MAKE THESE INTO SETTINGS TAB VS MAIN TAB? 
+            ALTERNATIVES: 
+                TAB HEADERS(FIXED?)
+                TOP NAVIGATION BAR(FIXED?)
+                SIDEBAR(NOT FIXED, OR MAKE RESPONSIVE TO SCREEN SIZE
+                MODIFIED SUB-NAVIGATION MENU
+                MODIFIED SUPER MENU
+                MODIFIED MOBILE NAVIGATION MENU
+                ACCORDION
+        -->
+        </div>
+        <div class="tab">
+            <button class="tablinks" onclick="openCity(event, 'a')">a</button>
+        </div>
+        <!-- TODO:
+            POSSIBLY PUT TABLE INSIDE AN ACCORDION?
+        -->
+        <!-- Tab content -->
+        <div id="a" class="tabcontent">
+            <h3>&nbsp;</h3>
+            <p></p>
+        </div>
+        <h1>Hello! :D</h1>
+        <button id="clickButton" class="button clickButton">
+            I'm a <strong>button</strong>! :D
+        </button>
+        <button id="nextButton" class="button" onclick="turnOrder.next()">
+            Next Participant
+        </button>
+        <button id="skipButton" class="button">
+            Skip participant
+        </button>
+        <br>
+        <input id="userNameField" type="text" onkeydown="userNameFieldKeyDown(event)">
+        <button id="addUserButton" class="button addUserButton" onClick="addUser()">
+            Add participant
+        </button>
+        <button id="switchAddModeButton" class="button switchAddModeButton" onclick="switchAddMode()">
+            
+        </button>
+        
+        
+        <table id="turnOrderTable">
+        <caption class="turnOrderTableCaption"><strong>Turn order</strong></caption>
+            <tbody>
+                <tr id="turnOrderTableHeader">
+                    <th>Name</th>
+                    <th>#</th>
+                    <th>AFK</th>
+                    <th>Actions</th>
+                </tr>
+            </tbody>
+            <tbody id="turnOrderTableContent">
+                
+            </tbody>
+        </table>
+        
+        
+        <script>
+            var exists=function(input){
+                var typeExist=typeof(input)!=="undefined" && typeof(input)!=="null";
+                var equalExist=input!==undefined && input!==null;
+                if(typeExist && equalExist){
+                    return true;
+                }
+                return false;
+            };
+            
+            //TODO  9: Randomize order button
+            //TODO   : Sort button (alphabetically, [...])
+            //TODO  3: Toggle Status button(Add left room state?)
+            //TODO  3: Edit name button
+            //TODO  ?: Confirm promts? Undo button?
+            //TODO 1b: Clean user input from html tags
+            //TODO ?a: Add turns taken stat?
+            //TODO  !: Move user up/down
+            //TODO   : Export and import list buttons
+            //TODO !1: Sync between users/save lists on server
+            //TODO   : Reset button
+            //TODO   : Allow creations of multiple lists
+            //TODO 1a: Permissions for lists
+            //TODO   : Extra turn button for user
+            //TODO a1: Finish skip button functionality
+            
+            
+            //TODO?: FINISH ELEMENTS CONTAINER 
+            var Elements=function(){
+                // add subcategory of type Elements
+                this.addCategory=function(){
+                    var temp    = new Elements();
+                    temp.parent = this;
+                    return temp;
+                };
+                this.addSingleWithNamesake=function(input){
+                    console.log("Elements.addSingleWithNamesake running...");
+                    if(exists(input) && typeof input === "string"){
+                        console.log("\texists(input) && typeof input === 'string'")
+                        var temp = document.getElementById(input);
+                        if(exists(temp)){
+                            console.log("\t\texists(temp)");
+                            this[input]=temp;
+                        }else{
+                            throw("Elements.addSingleWithNamesake(): No such element!");
+                        }
+                    }
+                    
+                }; //DONE
+                this.addWithNamesake=function(input){
+                    console.log("Elements.addWithNamesake() running{");
+                    for(var i=0; i<arguments.length; i++){
+                        this.addSingleWithNamesake(arguments[i]);
+                    }
+                    
+                }; //DONE
+            };
+            var elements      = new Elements();
+            var inputElements = new Elements();
+            elements.addCategory("buttons");
+            
+            elements.addWithNamesake("userNameField");
+            elements.addWithNamesake("turnOrderTableContent");
+            
+            //var buttonCounter=0;
+            var Buttons=function(){
+                this.addSingle=function(symbol, id){
+                    var exists=function(input){
+                        return input!==null && input!==undefined;
+                    };
+                    var symbolExists=exists(this[symbol]);
+                    if(symbolExists){
+                        throw(
+                            "Buttons.addSingle(): \""+symbol+"\" already exists, and "+
+                            "is of type '"+typeof this[symbol]+"' and has the value '"+
+                            this[symbol]+"'"
+                        );
+                    }else if(exists(symbol)){
+                        if(typeof symbol==="string"){
+                            console.log(
+                                "Buttons.addSingle, !symbolExists, exists(symbol), "+
+                                "typeof symbol === string"
+                            );
+                            var idExists=id!==null && id!==undefined && id!=="";
+                            if(idExists){
+                                console.log(
+                                    "Buttons.addSingle, !symbolExists, exists(symbol)"+
+                                    ", typeof symbol === string, idExists"
+                                );
+                                if(typeof id==="function"){
+                                    console.log(
+                                        "Buttons.addSingle, !symbolExists, "+
+                                        "exists(symbol), "+"typeof symbol === string, "+
+                                        "idExists, "+"typeof id === function"
+                                    );
+                                    //console.log(typeof this[symbol]);
+                                    this[symbol]=document.getElementById(symbol);
+                                    //console.log(typeof this[symbol]);
+                                    //console.log(this[symbol]);
+                                    //console.log(symbol);
+                                    this[symbol].addEventListener("click", id);
+                                    //console.log(typeof this[symbol]);
+                                }else if(typeof id==="string"){
+                                    this[symbol]=document.getElementById(id);
+                                }else{
+                                    throw(
+                                        "Buttons.addSingle() symbolExists, idExists, "+
+                                        "typeof id !== function"
+                                    );
+                                }
+                            }else{
+                                this[symbol]=document.getElementById(symbol);
+                            }
+                        }
+                    }else{
+                        throw("Buttons.addSingle() error");
+                    }
+                };
+                this.add=function(symbol, id){
+                    if(arguments.length>1 && arguments.length%2===0){
+                        for(var i=0; i<arguments.length-1; i+=2){
+                            return this.addSingle(arguments[i], arguments[i+1]);
+                        }
+                    }
+                    var exists=function(input){
+                        return input!==null && input!==undefined;
+                    };
+                    var symbolExists=exists(this[symbol]);
+                    if(symbolExists){
+                        //console.log(++buttonCounter+"   "+ this.addUserButton);
+                        throw(
+                            "Buttons.add(): \""+symbol+"\" already exists, and is "+
+                            "of type '"+typeof this[symbol]+"' and has the value '"+
+                            this[symbol]+"'"
+                        );
+                    }else if(exists(symbol)){
+                        //console.log("Buttons.add { !symbolExists, exists(symbol)");
+                        if(typeof symbol==="string"){
+                            console.log(
+                                "Buttons.add, !symbolExists, exists(symbol), "+
+                                "typeof symbol === string"
+                            );
+                            var idExists=id!==null && id!==undefined && id!=="";
+                            if(idExists){
+                                console.log(
+                                    "Buttons.add, !symbolExists, exists(symbol), "+
+                                    "typeof symbol === string, idExists"
+                                );
+                                if(typeof id==="function"){
+                                    console.log(
+                                        "Buttons.add, !symbolExists, exists(symbol), "+
+                                        "typeof symbol === string, idExists, "+
+                                        "typeof id === function"
+                                    );
+                                    //console.log(typeof this[symbol]);
+                                    this[symbol]=document.getElementById(symbol);
+                                    //console.log(typeof this[symbol]);
+                                    //console.log(this[symbol]);
+                                    //console.log(symbol);
+                                    this[symbol].addEventListener("click", id);
+                                    //console.log(typeof this[symbol]);
+                                }else if(typeof id==="string"){
+                                    this[symbol]=document.getElementById(id);
+                                }else{
+                                    throw(
+                                        "Buttons.add() symbolExists, idExists, "+
+                                        "typeof id !== function"
+                                    );
+                                }
+                            }else{
+                                this[symbol]=document.getElementById(symbol);
+                            }
+                        }
+                    }else{
+                        throw("Buttons.add() error");
+                    }
+                };
+                if(true){
+                    this.add(arguments);
+                }
+                for(var i=0; i<arguments.length-1; i+=2){
+                    this.add(arguments[i], arguments[i+1]);
+                    console.log("Buttons, for: i="+i+"  "+typeof arguments[i]+"  "+
+                        arguments[i+1]);
+                }
+            };
+            
+            //var buttons=new Buttons("addUserButton", null);
+            var switchAddMode=function(){
+                console.log("switchAddModeButton clicked!");
+                turnOrder.switchAddMode();
+                var addMode="FAIL";
+                if(turnOrder.addMode.value === turnOrder.addMode.FIRST){
+                    addMode="FIRST";
+                }else 
+                if(turnOrder.addMode.value === turnOrder.addMode.LAST){
+                    addMode="LAST";
+                }
+                document.getElementById("switchAddModeButton").textContent=addMode;
+            };
+            var userNameFieldKeyDown=function(event){
+                if(event.code==="Enter"){
+                    addUser();
+                }
+            };
+            var addUser = function(){
+                var name=userNameField.value;
+                turnOrder.add(name);
+                userNameField.value="";
+                console.log("addUser() running with name '"+name+"'");
+            };
+            //Change buttons input to be array, so this can be collapsed
+            var buttons=new Buttons(
+                "toggleAddModeButton", null,
+                "nextButton", null,
+                "skipButton", null
+            );
+            
+            for(var i in buttons){
+                console.log("buttons."+i);
+            }
+            //var actionButtons=new Buttons();
+            var table;
+            var updateTable=function(turnOrderInput){
+                for(var i=turnOrderTableContent.rows.length-1; i>=0; i--){
+                    turnOrderTableContent.deleteRow(i);
+                    
+                }
+                if(!exists(turnOrderInput)){
+                    throw("updateTable(): No input!");
+                }
+                for(var i=0; i<turnOrder.list.length; i++){
+                    var row   = turnOrderTableContent.insertRow(i);
+                    var cells = turnOrder.list[i].getCells();
+                    for(var j=0; j<cells.length; j++){
+                        cell=row.insertCell(j);
+                        cell.innerHTML=cells[j];
+                    }
+                }
+            };
+            
+            
+            var TurnOrderItem=function(name, pos){
+                this.pos    = pos;
+                this.name   = name;
+                this.counter= 0;
+                this.afk    = false;
+                this.setActions=function(){
+                    return '<button class="button removeUserButton"'+
+                    'onClick="turnOrder.remove('+this.pos+')">Remove</button>';
+                };
+                this.actions= this.setActions();
+                this.STATUS = {
+                    PRESENT: 0,
+                    AFK    : 1,
+                };
+                status: null,
+                // For people who are afk, keep skipping them (without moving them to end of queue) if it's their turn, until they are back
+                this.setStatus = function(){
+                    //if no input, just toggle/switch to next status
+                };
+                this.getCells  = function(){
+                    console.log("TurnOrderItem.getCells() returning ["+
+                        this.name+", "+(this.pos+1)+", "+this.afk+", "+
+                        this.actions+"]");
+                    return [this.name, (this.pos+1), this.afk, this.actions];
+                };
+                this.update    = function(position){
+                    this.pos=position;
+                    this.actions= this.setActions();
+                };
+            };
+            var turnOrder={
+                list  : [],
+                addMode : {
+                    value: 1,
+                    LAST:  0,
+                    FIRST: 1,
+                    MIN_VALUE: 0,
+                    MAX_VALUE: 1,
+                    switch: function(){
+                        console.log("addMode.value==="+this.value);
+                        this.value++;
+                        if(this.value>this.MAX_VALUE){
+                            this.value=this.MIN_VALUE;
+                        }
+                    },
+                },
+                switchAddMode: function(){
+                    this.addMode.switch();
+                },
+                add   : function(name){
+                    // add a turnOrderItem in this.list
+                    console.log("turnOrder.add("+name+")")
+                    var nameExists=exists(name) && name!=="";
+                    if(!nameExists){
+                        name="[Unnamed participant]";
+                        console.log("turnOrder.add, !nameExists");
+                    }
+                    if(this.addMode.value===this.addMode.FIRST){
+                        this.list.unshift(new TurnOrderItem(name,0));
+                    }else if(this.addMode.value===this.addMode.LAST){
+                        this.list.push(new TurnOrderItem(name, this.list.length));
+                    }else{
+                        throw(
+                            "turnOrder.add() with input \""+name+"\" of type \""+
+                            typeof(name)+"\" encountered an issue. The value of"+
+                            " addMode.value was \""+this.addMode.value+"\""
+                        );
+                    }
+                    console.log(this.list[
+                        this.list.length*this.addMode.value-this.addMode.value
+                    ]);
+                    this.update();
+                }, //DONE
+                next  : function(){
+                    this.list.push(this.list[0]);
+                    this.list.shift();
+                    this.update();
+                },
+                skip  : function(){},
+                remove: function(position){
+                    this.list.splice(position, 1);
+                    this.update();
+                },//DONE?
+                getTableContents: function(){
+                    var temp="";
+                    for(var i=0; i<this.list.length; i++){
+                        temp+=this.list[i].getTableRow();
+                    }
+                    console.log("turnOrder.getTableContents: "+temp);
+                    return temp;
+                },
+                update: function(){
+                    for(var i=0; i<this.list.length; i++){
+                        this.list[i].update(i);
+                    }
+                    updateTable(this);
+                },
+            };
+            
+            
+            switchAddMode();
+            
+            console.log("--- END OF STARTUP ---");
+        </script>
+        
+    </body>
+</html>
